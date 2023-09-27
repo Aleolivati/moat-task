@@ -1,5 +1,14 @@
+import Home from '~/pages/Home'
+
+import Artists from '~/pages/Artists'
+
 const App = () => {
-  return <h1>Hello Task!</h1>
+  return (
+    <>
+      <Home />
+      <Artists />
+    </>
+  )
 }
 
 export default App

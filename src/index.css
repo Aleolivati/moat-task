@@ -3,3 +3,28 @@
   padding: 0;
   box-sizing: border-box;
 }
+
+body{
+  background: linear-gradient(45deg, #000 0%,  #311638 55%, #803992 90%, rgba(186, 85, 211, 1) 100%);;
+  color: #fff;
+}
+
+.container{
+  width: 100vw;
+  height: 100vh;
+}
+
+.bg-purple{
+  background-color: rgba(186, 85, 211, 0.7);
+
+  &:checked{
+    background-color: #000;
+    border: 8px solid #000;
+    outline: 2px solid #fff;
+  }
+}
+
+.overflow{
+  max-height: 40vh;
+  overflow-y: scroll;
+}
