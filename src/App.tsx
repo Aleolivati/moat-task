@@ -1,13 +1,12 @@
-import Home from '~/pages/Home'
+import { BrowserRouter } from 'react-router-dom'
 
-import Artists from '~/pages/Artists'
+import RoutePages from '~/routes'
 
 const App = () => {
   return (
-    <>
-      <Home />
-      <Artists />
-    </>
+    <BrowserRouter>
+      <RoutePages />
+    </BrowserRouter>
   )
 }
 
