@@ -5,4 +5,13 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://europe-west1-madesimplegroup-151616.cloudfunctions.net',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
 })

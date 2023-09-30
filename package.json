@@ -13,11 +13,14 @@
     "format": "npm run prettier:fix && npm run lint:fix"
   },
   "dependencies": {
+    "axios": "^1.5.1",
     "bootstrap": "^5.3.2",
     "react": "^18.1.0",
     "react-bootstrap": "^2.8.0",
     "react-dom": "^18.1.0",
-    "react-router-dom": "^6.16.0"
+    "react-icons": "^4.11.0",
+    "react-router-dom": "^6.16.0",
+    "vite-plugin-proxy": "^0.5.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.9",

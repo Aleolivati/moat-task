@@ -14,8 +14,16 @@ body{
   height: 100vh;
 }
 
+.bg-modal{
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
 .bg-purple{
   background-color: rgba(186, 85, 211, 0.7);
+
+  &.bg-purple--modal{
+    background-color: rgba(186, 85, 211, 1);
+  }
 
   &:checked{
     background-color: #000;
@@ -24,7 +32,21 @@ body{
   }
 }
 
+.blank-space{
+  height: 16vh;
+  @media (min-width: 409px) {
+    height: 22vh;
+  }
+
+}
+
 .overflow{
-  max-height: 40vh;
+  height: 30vh;
   overflow-y: scroll;
+}
+
+.transparent{
+  background-color: transparent;
+  border: none;
+  color: #fff;
 }
