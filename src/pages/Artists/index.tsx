@@ -6,81 +6,14 @@ import Album from '~/components/Album'
 import BgContainer from '~/components/BgContainer'
 import Button from '~/components/Button'
 
-type PropsAlbuns = {
+export type PropsAlbuns = {
   id: number
   artist: string
-  album_name: string
-  year: string
+  name: string
+  releasedYear: number
   created_at: string
   updated_at: string | null
 }
-
-export const Albuns: PropsAlbuns[] = [
-  {
-    id: 1,
-    artist: 'Shakira',
-    album_name: 'Teste 1',
-    year: '1990',
-    created_at: '2023-09-22T12:00:00.000Z',
-    updated_at: null,
-  },
-  {
-    id: 2,
-    artist: 'Shakira',
-    album_name: 'Teste 2',
-    year: '1990',
-    created_at: '2023-09-22T12:00:00.000Z',
-    updated_at: null,
-  },
-  {
-    id: 3,
-    artist: 'Shakira',
-    album_name: 'Teste 3',
-    year: '1990',
-    created_at: '2023-09-22T12:00:00.000Z',
-    updated_at: null,
-  },
-  {
-    id: 4,
-    artist: 'Shakira',
-    album_name: 'Teste 4',
-    year: '1990',
-    created_at: '2023-09-22T12:00:00.000Z',
-    updated_at: null,
-  },
-  {
-    id: 11,
-    artist: 'Justin Bieber',
-    album_name: 'Teste 11',
-    year: '1990',
-    created_at: '2023-09-22T12:00:00.000Z',
-    updated_at: null,
-  },
-  {
-    id: 12,
-    artist: 'Justin Bieber',
-    album_name: 'Teste 12',
-    year: '1990',
-    created_at: '2023-09-22T12:00:00.000Z',
-    updated_at: null,
-  },
-  {
-    id: 13,
-    artist: 'Justin Bieber',
-    album_name: 'Teste 13',
-    year: '1990',
-    created_at: '2023-09-22T12:00:00.000Z',
-    updated_at: null,
-  },
-  {
-    id: 14,
-    artist: 'Justin Bieber',
-    album_name: 'Teste 14',
-    year: '1990',
-    created_at: '2023-09-22T12:00:00.000Z',
-    updated_at: null,
-  },
-]
 
 type PropsArtistsApi = {
   json: [
@@ -97,40 +30,84 @@ type PropsArtistsApi = {
 const Artists = () => {
   const navigate = useNavigate()
 
-  const getDateNow = () => {
-    const now = new Date()
-    const year = String(now.getFullYear()).padStart(4, '0')
-    const month = String(now.getMonth()).padStart(2, '0')
-    const day = String(now.getDay()).padStart(2, '0')
-    const hours = String(now.getHours()).padStart(2, '0')
-    const minutes = String(now.getMinutes()).padStart(2, '0')
-    const seconds = String(now.getSeconds()).padStart(2, '0')
-    const dateNow = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`
-    return dateNow
-  }
-
   const [albums, setAlbums] = useState<PropsAlbuns[]>()
+  const [artistsOptions, setArtistsOptions] = useState<PropsArtistsApi>()
   const [selectArtist, setSelectArtist] = useState('')
   const [isAdding, setIsAdding] = useState(false)
   const [albumName, setAlbumName] = useState('')
-  const [yearAlbum, setYearAlbum] = useState('')
-  const [error, setError] = useState(false)
-  const [albunsToShow, setAlbunsToShow] = useState<PropsAlbuns[]>()
+  const [yearAlbum, setYearAlbum] = useState(0)
+  const [nameError, setNameError] = useState(false)
+  const [yearError, setYearError] = useState(false)
+
+  const apiAlbum = axios.create({
+    baseURL: 'http://localhost:8080/api/v1/',
+    headers: { Authorization: `${localStorage.getItem('userToken')}` },
+  })
 
   useEffect(() => {
     if (localStorage.getItem('userRole') === null) {
       alert('Please log in before accessing the app content! xD')
       navigate('/')
+    } else {
+      axios
+        .get('/api/artists-api-controller', {
+          headers: {
+            authorization: 'Basic ZGV2ZWxvcGVyOlpHVjJaV3h2Y0dWeQ==',
+          },
+        })
+        .then((res) => {
+          setArtistsOptions(res.data)
+        })
     }
   }, [navigate])
 
+  const cancelAddAlbum = () => {
+    setAlbumName('')
+    setYearAlbum(0)
+    setIsAdding(false)
+    setNameError(false)
+    setYearError(false)
+  }
+
+  const validateInputs = (name: string, year: number) => {
+    const errors = []
+    setNameError(false)
+    setYearError(false)
+
+    if (name.length < 1) {
+      errors.push('ALBUM NAME')
+      setNameError(true)
+    }
+    if (year < 1000) {
+      errors.push('YEAR')
+      setYearError(true)
+    }
+    if (errors.length > 0) {
+      alert(
+        `Oops! Please fill in the following fields correctly: ${errors.join(', ')} before continuing...`,
+      )
+      return false
+    }
+
+    return true
+  }
+
   // **************************** HEADER FUNCTIONS ****************************
 
-  const logout = () => {
+  const logout = async () => {
     const isConfirmed = confirm('You really want logout?')
     if (isConfirmed) {
-      localStorage.clear()
-      navigate('/')
+      const logout = await apiAlbum.post('/sessions/logout')
+      try {
+        if (logout.status === 204) {
+          localStorage.clear()
+          navigate('/')
+        }
+      } catch (error) {
+        console.log(error)
+        localStorage.clear()
+        navigate('/')
+      }
     }
   }
 
@@ -143,81 +120,67 @@ const Artists = () => {
   // **************************** METHODS ****************************
 
   const getAlbums = async () => {
-    const response = await axios.get('/')
+    const response = await apiAlbum.get(`/albums?artist=${selectArtist}`)
     try {
       if (response.status === 200) {
         setAlbums(response.data)
       }
     } catch (error) {
       alert('Sorry, the data could not be updated. Contact the admin for more information! =(')
-      // localStorage.clear()
-      // navigate('/')
+      localStorage.clear()
+      navigate('/')
     }
   }
 
-  const addAlbum = async (e: FormEvent, album_name: string, year: string) => {
+  const addAlbum = async (e: FormEvent, album_name: string, year: number) => {
     e.preventDefault()
-    if (albumName.length < 1 || yearAlbum.length < 4) {
-      alert('Oops! Please try to fill all the fields correctly before continue...')
-      setError(true)
-    } else {
-      const albumAlreadyExists = albunsToShow?.find(
-        (album) => album.album_name.toLowerCase() === album_name.toLowerCase(),
+
+    const isValidated = validateInputs(albumName, yearAlbum)
+
+    if (isValidated) {
+      const albumAlreadyExists = albums?.find(
+        (album) => album.name.toLowerCase() === album_name.toLowerCase(),
       )
       if (albumAlreadyExists) {
         alert('This album has already been added... Please add a new album only!')
-        setError(true)
+        setNameError(true)
+        setYearError(true)
       } else {
-        const lastId = Albuns[Albuns.length - 1]
-        const newId = lastId ? lastId.id + 1 : 1
         const newAlbum = {
-          id: newId,
           artist: selectArtist,
-          album_name: album_name,
-          year: year,
-          created_at: getDateNow(),
-          updated_at: null,
+          name: album_name,
+          releasedYear: year,
         }
         try {
-          const response = await axios.post('', newAlbum)
+          const response = await apiAlbum.post('/albums', newAlbum)
           if (response.status === 201) {
             alert('Album added successfully! =D')
-            setAlbumName('')
-            setYearAlbum('')
-            setIsAdding(false)
-            setError(false)
+            cancelAddAlbum()
             getAlbums()
           }
         } catch (error) {
           console.log(error)
           alert('Sorry, the album cannot be added. Try again later... =/')
-          setError(true)
+          setNameError(true)
+          setYearError(true)
         }
       }
     }
   }
 
-  const [artistsOptions, setArtistsOptions] = useState<PropsArtistsApi>()
-
-  const showOptions = () => {
-    axios
-      .get('/api/artists-api-controller', {
-        headers: {
-          authorization: 'Basic ZGV2ZWxvcGVyOlpHVjJaV3h2Y0dWeQ==',
-        },
-      })
-      .then((res) => {
-        setArtistsOptions(res.data)
-      })
-    const findAlbuns = Albuns.filter((album) => album.artist === selectArtist)
-    setAlbunsToShow(findAlbuns)
-  }
-
-  const cancelAddAlbum = () => {
-    setAlbumName('')
-    setYearAlbum('')
-    setIsAdding(false)
-    setError(false)
+  const deleteAlbum = async (id: number) => {
+    const isConfirmed = confirm('Do you really really really want to delete this album?')
+    if (isConfirmed) {
+      try {
+        const response = await apiAlbum.delete(`/albums/${id}`)
+        if (response.status === 204) {
+          alert('Album deleted successfully!')
+          getAlbums()
+        }
+      } catch (error) {
+        alert('It was NOT possible to delete the album at the moment. Please try again later...')
+      }
+    }
   }
 
   return (
@@ -241,7 +204,7 @@ const Artists = () => {
               </label>
               <input
                 className={`form-control text-center mb-2 mw-100 ${
-                  error ? 'border border-danger border-4' : ''
+                  nameError ? 'border border-danger border-4' : ''
                 }`}
                 type='text'
                 id='album_name'
@@ -252,13 +215,14 @@ const Artists = () => {
                 Year
               </label>
               <input
-                className={`form-control text-center mw-100 mb-3 ${
-                  error ? 'border border-danger border-4' : ''
+                className={`form-control text-center mw-100 mb-3 hiddeInnerSpinButton ${
+                  yearError ? 'border border-danger border-4' : ''
                 }`}
                 type='number'
                 id='year'
                 value={yearAlbum}
-                onChange={({ target }) => setYearAlbum(target.value)}
+                min={0}
+                onChange={({ target }) => setYearAlbum(target.valueAsNumber)}
               />
               <Button roleOf='button' type='submit' title='Add Album' />
               <Button roleOf='button' type='button' title='Cancel' onClick={cancelAddAlbum} />
@@ -280,7 +244,7 @@ const Artists = () => {
                 className='transparent mb-2 text-decoration-underline text-start ps-md-4'
                 onClick={createAdminAccount}
               >
-                Create admin account
+                Create account
               </button>
             )}
             <button
@@ -297,10 +261,10 @@ const Artists = () => {
         <BgContainer paddingLarge={false}>
           <select
             className='fs-3 rounded-4 ps-3 ps-md-5 pe-3 pe-md-5 text-center'
-            onClick={showOptions}
+            onClick={getAlbums}
             onChange={(e) => setSelectArtist(e.target.value)}
           >
-            <option></option>
+            {artistsOptions ? <option></option> : <option>Loading...</option>}
             {artistsOptions &&
               artistsOptions.json.map((data) => {
                 const artist = data[0]
@@ -344,13 +308,16 @@ const Artists = () => {
                 {/* **************************** MAP of the filtered albums of the artist **************************** */}
 
                 <div className='row text-start d-flex align-items-center ps-md-4 overflow'>
-                  {albunsToShow && albunsToShow.length !== 0 ? (
-                    albunsToShow.map((album) => {
+                  {albums && albums.length !== 0 ? (
+                    albums.map((album) => {
                       return (
                         <Album
                           key={album.id}
-                          albumName={album.album_name}
-                          albumYear={album.year}
+                          albums={albums}
+                          albumId={album.id}
+                          albumName={album.name}
+                          albumYear={album.releasedYear}
+                          deleteButton={() => deleteAlbum(album.id)}
                           selectArtist={selectArtist}
                         />
                       )
@@ -363,7 +330,7 @@ const Artists = () => {
                         There is NO albums here yet!
                       </h3>
                       <p className='col-12 transparent fs-4 text-wrap'>
-                        Hellp us and add some Album to this Artist!
+                        Help us and ADD some Album to this Artist!
                       </p>
                       <hr />
                     </div>

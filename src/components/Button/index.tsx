@@ -1,4 +1,10 @@
-import { MdLibraryAdd as AddIcon, MdEdit as EditIcon, MdDelete as DeleteIcon, MdSaveAs as SaveIcon, MdCancel as CancelIcon } from 'react-icons/md'
+import {
+  MdLibraryAdd as AddIcon,
+  MdEdit as EditIcon,
+  MdDelete as DeleteIcon,
+  MdSaveAs as SaveIcon,
+  MdCancel as CancelIcon,
+} from 'react-icons/md'
 
 type PropsButton = {
   title?: string
@@ -22,7 +28,12 @@ const Button = ({ title, icon, roleOf, type, onClick }: PropsButton) => {
   }
   if (roleOf === 'crud') {
     return (
-      <button className={`col-2 btn btn-outline-light d-flex align-items-center mb-2 rounded-5 w-auto ${icon === 'add' && 'bg-success'}`} onClick={onClick}>
+      <button
+        className={`col-2 btn btn-outline-light d-flex align-items-center mb-2 rounded-5 w-auto ${
+          icon === 'add' && 'bg-success'
+        }`}
+        onClick={onClick}
+      >
         <>
           {icon === 'add' && <AddIcon />}
           {icon === 'delete' && <DeleteIcon />}

@@ -1,38 +1,40 @@
 import { useEffect, useState } from 'react'
 import Button from '../Button'
-import { Albuns } from '~/pages/Artists'
+import { PropsAlbuns } from '~/pages/Artists'
 import axios from 'axios'
 
 type PropsAlbum = {
-  key: number
+  albumId: number
   albumName: string
-  albumYear: string
+  albumYear: number
   selectArtist: string
+  deleteButton: () => void
+  albums: PropsAlbuns[]
 }
 
-const Album = ({ key, albumName: originalAlbumName, albumYear: originalAlbumYear, selectArtist }: PropsAlbum) => {
+const Album = ({
+  albums,
+  albumId,
+  albumName: originalAlbumName,
+  albumYear: originalAlbumYear,
+  selectArtist,
+  deleteButton,
+}: PropsAlbum) => {
   const [isEditing, setIsEditing] = useState(false)
   const [albumName, setAlbumName] = useState('')
-  const [albumYear, setAlbumYear] = useState('')
+  const [albumYear, setAlbumYear] = useState(0)
 
-  const getDateNow = () => {
-    const now = new Date()
-    const year = String(now.getFullYear()).padStart(4, '0')
-    const month = String(now.getMonth()).padStart(2, '0')
-    const day = String(now.getDay()).padStart(2, '0')
-    const hours = String(now.getHours()).padStart(2, '0')
-    const minutes = String(now.getMinutes()).padStart(2, '0')
-    const seconds = String(now.getSeconds()).padStart(2, '0')
-    const dateNow = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`
-    return dateNow
-  }
+  const apiAlbum = axios.create({
+    baseURL: 'http://localhost:8080/api/v1/',
+    headers: { Authorization: `${localStorage.getItem('userToken')}` },
+  })
 
   useEffect(() => {
     if (originalAlbumName.length > 0) {
       setAlbumName(originalAlbumName)
     }
 
-    if (originalAlbumYear.length > 0) {
+    if (originalAlbumYear > 0) {
       setAlbumYear(originalAlbumYear)
     }
   }, [originalAlbumName, originalAlbumYear])
@@ -43,27 +45,63 @@ const Album = ({ key, albumName: originalAlbumName, albumYear: originalAlbumYear
     setAlbumYear(originalAlbumYear)
   }
 
-  const editAlbum = async () => {
-    const albunsWithoutEditing = Albuns.filter(
-      (album) => album.album_name.toLowerCase() !== originalAlbumName.toLowerCase(),
+  const validateAlbum = () => {
+    const albunsWithoutEditing = albums.filter(
+      (album) => album.name.toLowerCase() !== originalAlbumName.toLowerCase(),
     )
-
     const albumAlreadyExists = albunsWithoutEditing.find(
-      (album) => album.album_name.toLowerCase() === albumName.toLowerCase(),
+      (album) => album.name.toLowerCase() === albumName.toLowerCase(),
     )
 
     if (albumAlreadyExists) {
       alert('An album with that name has already been added! Please try again...')
-    } else {
+      return false
+    }
+    if (albumName === originalAlbumName && albumYear === originalAlbumYear) {
+      const isConfirmed = confirm(
+        'No editing was performed on the fields. Do you want to CANCEL editing?',
+      )
+      if (isConfirmed) {
+        alert('The edition has been CANCELLED!')
+        cancelEdit()
+        return false
+      } else {
+        setIsEditing(true)
+        return false
+      }
+    }
+    return true
+  }
+
+  const validateInputs = () => {
+    if (albumName.length === 0 && albumYear < 1000) {
+      alert('Oops! Please try to fill ALL the fields correctly before continue...')
+      return false
+    }
+    if (albumName.length === 0) {
+      alert('Oops! Please try to fill the field ALBUM NAME correctly before continue...')
+      return false
+    }
+    if (albumYear < 1000) {
+      alert('Oops! Please try to fill the field YEAR correctly before continue...')
+      return false
+    }
+    return true
+  }
+
+  // **************************** METHODS ****************************
+
+  const editAlbum = async () => {
+    const albumIsValid = validateAlbum() && validateInputs()
+
+    if (albumIsValid) {
       try {
         const albumEdited = {
-          id: key,
           artist: selectArtist,
-          album_name: albumName,
-          year: albumYear,
-          update_at: getDateNow(),
+          name: albumName,
+          releasedYear: albumYear,
         }
-        const response = await axios.patch('', albumEdited)
+        const response = await apiAlbum.put(`/albums/${albumId}`, albumEdited)
         if (response.status === 200) {
           alert('Album edited successfully!')
           setIsEditing(false)
@@ -74,24 +112,8 @@ const Album = ({ key, albumName: originalAlbumName, albumYear: originalAlbumYear
     }
   }
 
-  const deleteAlbum = async (id: number) => {
-    const isConfirmed = confirm('Do you really really really want to delete this album?')
-    if (isConfirmed) {
-      try {
-        const response = await axios.delete(`/${id}`)
-        if (response.status === 200) {
-          alert('Album deleted successfully!')
-          // atualizar base
-        }
-      } catch (error) {
-        console.log(error)
-        alert('It was NOT possible to delete the album at the moment. Please try again later...')
-      }
-    }
-  }
-
   return (
-    <div className='row d-flex justify-content-between align-items-center mb-3' key={key}>
+    <div className='row d-flex justify-content-between align-items-center mb-3'>
       <input
         type='text'
         className={`col-9 transparent h3 ${
@@ -104,20 +126,20 @@ const Album = ({ key, albumName: originalAlbumName, albumYear: originalAlbumYear
       {!isEditing ? (
         <Button roleOf='crud' icon='edit' onClick={() => setIsEditing(true)} />
       ) : (
-        <Button roleOf='crud' icon='save' onClick={editAlbum}/>
+        <Button roleOf='crud' icon='save' onClick={editAlbum} />
       )}
       <input
-        className={`col-9 transparent fs-4 ${
+        className={`col-9 transparent fs-4 hiddeInnerSpinButton ${
           isEditing ? 'border border-warning border-3 rounded-3 ' : ''
         }`}
         type='number'
         value={albumYear}
-        onChange={({ target }) => setAlbumYear(target.value)}
+        onChange={({ target }) => setAlbumYear(target.valueAsNumber)}
         disabled={!isEditing}
       />
       {!isEditing ? (
         localStorage.getItem('userRole') === 'admin' && (
-          <Button roleOf='crud' icon='delete' onClick={() => deleteAlbum(key)} />
+          <Button roleOf='crud' icon='delete' onClick={deleteButton} />
         )
       ) : (
         <Button roleOf='crud' icon='cancel' onClick={cancelEdit} />

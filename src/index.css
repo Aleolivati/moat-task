@@ -4,49 +4,56 @@
   box-sizing: border-box;
 }
 
-body{
-  background: linear-gradient(45deg, #000 0%,  #311638 55%, #803992 90%, rgba(186, 85, 211, 1) 100%);;
+body {
+  background: linear-gradient(45deg, #000 0%, #311638 55%, #803992 90%, rgba(186, 85, 211, 1) 100%);
   color: #fff;
 }
 
-.container{
+.container {
   width: 100vw;
   height: 100vh;
 }
 
-.bg-modal{
+.bg-modal {
   background-color: rgba(0, 0, 0, 0.7);
 }
 
-.bg-purple{
+.bg-purple {
   background-color: rgba(186, 85, 211, 0.7);
 
-  &.bg-purple--modal{
+  &.bg-purple--modal {
     background-color: rgba(186, 85, 211, 1);
   }
 
-  &:checked{
+  &:checked {
     background-color: #000;
     border: 8px solid #000;
     outline: 2px solid #fff;
   }
 }
 
-.blank-space{
+.blank-space {
   height: 16vh;
   @media (min-width: 409px) {
     height: 22vh;
   }
-
 }
 
-.overflow{
+.overflow {
   height: 30vh;
   overflow-y: scroll;
 }
 
-.transparent{
+.transparent {
   background-color: transparent;
   border: none;
   color: #fff;
+}
+
+.hiddeInnerSpinButton {
+  appearance: textfield;
+
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
 }
